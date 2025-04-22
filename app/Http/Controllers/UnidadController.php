@@ -5,39 +5,40 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use App\Models\Unidad;
-use App\Models\Cambio;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Database\Eloquent\Model;
-use DB;
 
 class UnidadController extends Controller
 {
-	/**  En la siguiente funcion se recibe la magnitud seleccionada y con ella consulto a la BD
-	* para obtener las unidades correspondientes a dicha magnitud y devolverlo a la web mediante Json
-	* junto con el estado. Y si no hay unidades para dicha magnitud devuelve un error 404 
-	*/
-    public function index($magnitud){
+    /**
+     * Devuelve las unidades correspondientes a una magnitud específica.
+     *
+     * @param string $magnitud
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function index($magnitud)
+    {
+        if (!$magnitud || !is_string($magnitud)) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Magnitud no válida.'
+            ], Response::HTTP_BAD_REQUEST);
+        }
 
-		$unidades = Unidad::where('magnitud', $magnitud)->get();
-		//var_dump(count($unidades));
+        $unidades = Unidad::where('magnitud', $magnitud)->get();
 
-		if(count($unidades) > 0){
+        if ($unidades->isNotEmpty()) {
+            return response()->json([
+                'status' => 'success',
+                'magnitud' => $magnitud,
+                'unidades' => $unidades
+            ], Response::HTTP_OK);
+        }
 
-			$data = array(
-    			'code'	=>	'200',
-	    		'status'	=>	'success',
-	    		'unidades'	=>	$unidades
-    		);
-		}else{
-			
-			$data = array(
-    			'code'	=>	'404',
-	    		'status'	=>	'error',
-	    		'error'	=>	'No existen unidades para '.$magnitud
-    		);
-		}
-    		
-    	
-    	return response()->json($data, $data['code']);
+        Log::info("No se encontraron unidades para la magnitud: $magnitud");
+
+        return response()->json([
+            'status' => 'error',
+            'message' => "No se encontraron unidades para la magnitud '{$magnitud}'"
+        ], Response::HTTP_NOT_FOUND);
     }
 }

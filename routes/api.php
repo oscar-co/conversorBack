@@ -18,8 +18,13 @@ use Illuminate\Support\Facades\Route;
     return $request->user();
 });*/
 
-Route::get('/unidades/{magnitud}', 'App\Http\Controllers\UnidadController@index');
-Route::post('/cambio', 'App\Http\Controllers\CambioController@cambio');
-Route::post('/calculo', 'App\Http\Controllers\PatronController@calculoMain');
-Route::post('/calculoIncertidumbre', 'App\Http\Controllers\PatronController@calculoIncertidumbre');
+// Ruta para obtener unidades por magnitud
+Route::get('/units/{magnitud}', [UnidadController::class, 'index'])->name('units.byMagnitude');
+// Conversión entre unidades
+Route::post('/convert', [CambioController::class, 'cambio'])->name('conversion.convert');
+// Cálculo de patrones recomendados
+Route::post('/patterns/recommend', [PatronController::class, 'calculoMain'])->name('patterns.recommend');
+// Cálcul de incertidumbre para un Patrón
+Route::post('/patterns/uncertainty', [PatronController::class, 'calculoIncertidumbre'])->name('patterns.uncertainty');
+
 //Route::get('/prueba', 'App\Http\Controllers\CambioController@prueba');

@@ -4,133 +4,134 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Database\Eloquent\Model;
-use App\Models\Cambio;
 use App\Models\Patron;
 use App\Models\Patron_punto;
+use App\Http\Controllers\CambioController;
 
 class PatronController extends Controller
 {
-    public function calculoMain(Request $request){
+    /**
+     * Cálculo principal: convierte el valor de entrada y busca los patrones disponibles.
+     */
+    public function calculoMain(Request $request)
+    {
+        $params_array = $this->decodeJson($request);
 
-        $json = $request->input('json', null);
-        
-    	$params = json_decode($json);
-        $params_array = json_decode($json, true);
+        if (!$params_array) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Parámetros inválidos o mal formateados.'
+            ], Response::HTTP_BAD_REQUEST);
+        }
 
-        /* Llamo a la función tipoMagnitud que me devuelve el valor (universal de la app) 
-        para cada magnitud */
-        $c = self::tipoMagnitud($params_array);
+        $valorConvertido = $this->tipoMagnitud($params_array);
+        $patrones = $this->buscarPatrones($valorConvertido, $params_array['sMagnitudPat']);
 
-        /**Llamo a la funcion de buscar los patrones que coinciden con la magnitud y el 
-         * valor introducido para convertir
-         */
-        $p = self::buscarPatrones($c, $params_array['sMagnitudPat']);
- 
-        return $p;
-
-
-        //Log::emergency('Objeto recibido: '.$json);
-    }
-
-    public function buscarPatrones($valor, $magnitud){
-
-        /*echo $valor;
-        echo $magnitud;*/
-
-        $p = Patron::where('magnitud', $magnitud)
-                        ->where('valor_minimo', '<', $valor)
-                        ->where('valor_maximo', '>', $valor)
-                        ->pluck('ptn')->toArray();
-
-        return $p;
-
-
+        return response()->json([
+            'status' => 'success',
+            'patrones' => $patrones
+        ]);
     }
 
     /**
-     * En esta función recojo los valores introducidos y llamo a las funciones de 
-     * conversion del CambioController pasandole la unidad de entrada y el valor de
-     * entrada y poniendo en cada Case el valor de salida (universal de la app) para
-     * luego buscar patrones, etc
+     * Cálculo de la incertidumbre asociada a un patrón.
      */
-    public function tipoMagnitud($params_array){
+    public function calculoIncertidumbre(Request $request)
+    {
+        $params_array = $this->decodeJson($request);
 
+        if (
+            !$params_array ||
+            empty($params_array['patronPat']) ||
+            empty($params_array['sMagnitudPat']) ||
+            empty($params_array['uEntradaPat']) ||
+            !isset($params_array['vEntradaPat'])
+        ) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Faltan parámetros necesarios para calcular la incertidumbre.'
+            ], Response::HTTP_BAD_REQUEST);
+        }
+
+        $valor = $this->tipoMagnitud($params_array);
+        $patronNombre = $params_array['patronPat'];
+
+        $patronId = Patron::where('ptn', $patronNombre)->value('id');
+
+        if (!$patronId) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Patrón no encontrado.'
+            ], Response::HTTP_NOT_FOUND);
+        }
+
+        $incertidumbre = Patron_punto::where('ptn_id', $patronId)
+            ->where('lectura_patron', '>', $valor)
+            ->orderBy('lectura_patron')
+            ->value('incertidumbre');
+
+        return response()->json([
+            'status' => 'success',
+            'valor' => $incertidumbre
+        ]);
+    }
+
+    /**
+     * Convierte el valor de entrada a una unidad común según la magnitud.
+     */
+    private function tipoMagnitud(array $params_array)
+    {
         $magnitud = $params_array['sMagnitudPat'];
         $uniEntrada = $params_array['uEntradaPat'];
         $valEntrada = $params_array['vEntradaPat'];
 
-        $cC = new CambioController;
+        $cambio = new CambioController;
 
-        switch($magnitud){
+        $convertir = [
+            'uEntrada' => $uniEntrada,
+            'vEntrada' => $valEntrada
+        ];
 
+        switch ($magnitud) {
             case 'temperatura':
-
-                $convertir = array(
-                    "uEntrada" => $uniEntrada,
-                    "uSalida" => "ºC",
-                    "vEntrada"   => $valEntrada
-                );
-
-                $c = $cC->calculoTemperatura($convertir);
-            break;
+                $convertir['uSalida'] = 'ºC';
+                return $cambio->calculoTemperatura($convertir);
 
             case 'presion':
-
-                $convertir = array(
-                    "uEntrada" => $uniEntrada,
-                    "uSalida" => 'mbar',
-                    "vEntrada"   => $valEntrada
-                );
- 
-                $c = $cC->calculoMagnitudes($convertir);
-            break;
+                $convertir['uSalida'] = 'mbar';
+                return $cambio->calculoMagnitudes($convertir);
 
             case 'masa':
+                $convertir['uSalida'] = 'g';
+                return $cambio->calculoMagnitudes($convertir);
 
-                $convertir = array(
-                    "uEntrada" => $uniEntrada,
-                    "uSalida" => 'g',
-                    "vEntrada"   => $valEntrada
-                );
-                $c = $cC->calculoMagnitudes($convertir);
-            break;
+            default:
+                return $valEntrada;
         }
-        return $c;
     }
 
-    public function calculoIncertidumbre(Request $request){
+    /**
+     * Busca los patrones que aplican a una magnitud y un valor determinado.
+     */
+    private function buscarPatrones($valor, string $magnitud): array
+    {
+        return Patron::where('magnitud', $magnitud)
+            ->where('valor_minimo', '<', $valor)
+            ->where('valor_maximo', '>', $valor)
+            ->pluck('ptn')
+            ->toArray();
+    }
 
+    /**
+     * Decodifica el JSON del request.
+     */
+    private function decodeJson(Request $request): ?array
+    {
         $json = $request->input('json', null);
-        
-    	$params = json_decode($json);
-        $params_array = json_decode($json, true);
 
-        /*if(is_null($params_array['lectura_patron'])){
+        if (!$json) return null;
 
-            $data = array(
-    			'code'	=>	'404',
-	    		'status'	=>	'error',
-	    		'error'	=>	'No hay lectura_patron'
-    		);
-        }*/
-
-        $valEntrada = self::tipoMagnitud($params_array);
-        
-        $patron = $params_array['patronPat'];
-
-        $ptn_id = Patron::where('ptn', $patron)->pluck('id')->toArray();
-    	$i = Patron_punto::where('ptn_id', $ptn_id)
-    							->where('lectura_patron', '>', $valEntrada)
-    							->pluck('incertidumbre')
-                                ->first();
-
-            $data = array(
-                'code'	=>	'200',
-                'status'	=>	'success',
-                'valor'	=>	$i
-            );
-            return response()->json($data, $data['code']);
-        //return $i;            
+        $decoded = json_decode($json, true);
+        return is_array($decoded) ? $decoded : null;
     }
 }

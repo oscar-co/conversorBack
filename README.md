@@ -1,61 +1,64 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400"></a></p>
+# Backend – Conversor de Unidades y Cálculo de Incertidumbre (Laravel)
 
-<p align="center">
-<a href="https://travis-ci.org/laravel/framework"><img src="https://travis-ci.org/laravel/framework.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Este proyecto es una **API RESTful desarrollada con Laravel** que sirve como backend para una aplicación web creada en Angular. Fue uno de mis primeros proyectos fullstack, donde trabajé tanto el frontend como el backend de forma conectada.
 
-## About Laravel
+Aunque se trata de un proyecto desarrollado hace un tiempo, refleja mi iniciativa de integrar tecnologías modernas y construir soluciones completas de forma autónoma.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+> Hoy en día estoy enfocado en backend con **Java + Spring Boot**, pero mantengo este proyecto como ejemplo de mi evolución y de mi experiencia trabajando en proyectos reales con frontend y backend conectados por API.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+---
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## ¿Qué hace esta API?
 
-## Learning Laravel
+Esta API permite:
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+- **Convertir unidades** físicas de distintas magnitudes (masa, temperatura, presión...).
+- **Calcular la incertidumbre compuesta** basada en patrones de medida.
+- Servir como puente entre el frontend Angular y la lógica de negocio científica.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains over 1500 video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+---
 
-## Laravel Sponsors
+## Tecnologías utilizadas
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the Laravel [Patreon page](https://patreon.com/taylorotwell).
+- PHP 7.4+
+- Laravel 8
+- MySQL
+- Eloquent ORM
+- API REST
 
-### Premium Partners
+---
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Cubet Techno Labs](https://cubettech.com)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[Many](https://www.many.co.uk)**
-- **[Webdock, Fast VPS Hosting](https://www.webdock.io/en)**
-- **[DevSquad](https://devsquad.com)**
-- **[OP.GG](https://op.gg)**
+## Principales endpoints
 
-## Contributing
+| Método | Endpoint                       | Descripción                                      |
+|--------|--------------------------------|--------------------------------------------------|
+| GET    | `/api/units/{magnitud}`        | Devuelve las unidades asociadas a una magnitud. |
+| POST   | `/api/convert`                 | Realiza la conversión entre dos unidades.       |
+| POST   | `/api/patterns/recommend`      | Devuelve patrones recomendados según el valor.  |
+| POST   | `/api/patterns/uncertainty`    | Calcula la incertidumbre para un patrón dado.   |
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+---
 
-## Code of Conduct
+## Cómo ejecutar el proyecto
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+1. Clona el repositorio:
 
-## Security Vulnerabilities
+`git clone https://github.com/oscar-co/conversorBack.git`
+`cd conversorBack`
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
 
-## License
+2. Instala las dependencias:
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+`composer install`
+
+
+3. Copia el archivo .env:
+`cp .env.example .env`
+
+
+4. Configura la base de datos y genera la clave:
+``php artisan key:generate``
+``php artisan migrate``
+
+5. Lanza el servidor local:
+``php artisan serve``

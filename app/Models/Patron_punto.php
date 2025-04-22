@@ -2,19 +2,17 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Patron;
 
-class Patron_punto extends Model
+class PatronPunto extends Model
 {
     protected $table = 'patron_puntos';
 
-    public function patrones(){
-		return $this->belongsTo('App\Patron');
-	}
+    protected $fillable = ['ptn_id', 'lectura_patron', 'incertidumbre'];
 
-	/*public function tmp_patron_puntos(){
-		return $this->hasMany('App\TmpPuntosPatron');	
-	}*/
-	
+    public function patron()
+    {
+        return $this->belongsTo(Patron::class, 'ptn_id');
+    }
 }
